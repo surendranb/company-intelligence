@@ -1,0 +1,31 @@
+{
+  "name": "company-intelligence",
+  "version": "0.1.0",
+  "description": "Comprehensive B2B Account Dossier, SEC Financials, USPTO Patents & Tech Stack Registry Engine",
+  "main": "index.js",
+  "bin": {
+    "company-intelligence": "./index.js",
+    "company-intelligence-mcp": "./index.js"
+  },
+  "files": [
+    "index.js"
+  ],
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "company-intelligence",
+    "sec-edgar",
+    "financials",
+    "patents",
+    "tech-stack"
+  ],
+  "author": "Surendran B <reachsuren@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/surendranb/company-intelligence.git"
+  }
+}
