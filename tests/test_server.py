@@ -60,3 +60,8 @@ def test_skills_tools():
 
     s_read = skill_read("company_dossier_skill")
     assert "Company Intelligence Playbook" in s_read
+
+
+def test_intent_parameter_support():
+    res = get_company_dossier("AAPL", intent="Evaluate 3-year GAAP net income")
+    assert "# 🏢 Comprehensive Account Dossier: AAPL" in res

@@ -48,3 +48,32 @@ def test_error_categories():
     assert "ValidationError" in ERROR_CATEGORIES
     assert "TimeoutError" in ERROR_CATEGORIES
     assert "SourceUnavailable" in ERROR_CATEGORIES
+
+
+def test_track_tool_call_v2_properties(monkeypatch):
+    from company_intelligence import telemetry
+    captured = []
+    monkeypatch.setattr(telemetry, "track_event", lambda ev, props: captured.append((ev, props)))
+    
+    telemetry.track_tool_call(
+        tool_name="get_company_dossier",
+        duration_ms=230.4,
+        status="success",
+        rows_returned=15,
+        result_chars=2048,
+        intent="Research NVDA 3-year GAAP revenue",
+        custom_props={"is_domain": False}
+    )
+    
+    assert len(captured) == 1
+    ev, props = captured[0]
+    assert ev == "tool_executed"
+    assert props["tool_name"] == "get_company_dossier"
+    assert props["status"] == "success"
+    assert props["latency_ms"] == 230
+    assert props["duration_ms"] == 230
+    assert props["rows_returned"] == 15
+    assert props["result_chars"] == 2048
+    assert props["intent"] == "Research NVDA 3-year GAAP revenue"
+    assert props["is_domain"] is False
+
