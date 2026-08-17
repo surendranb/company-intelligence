@@ -1,0 +1,7 @@
+name = "company-intelligence-site"
+compatibility_date = "2026-08-01"
+
+routes = [{ pattern = "company-intelligence.builditwithai.xyz", custom_domain = true }]
+
+[assets]
+directory = "./"

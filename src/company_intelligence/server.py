@@ -24,7 +24,12 @@ from company_intelligence.collectors.sec_edgar import (
     fetch_submissions,
     resolve_cik,
 )
-from company_intelligence.telemetry import MCP_SERVER_VERSION, track_event, track_tool_call
+from company_intelligence.telemetry import (
+    MCP_SERVER_VERSION,
+    classify_exception,
+    track_event,
+    track_tool_call,
+)
 
 mcp = MCPServer(
     "company-intelligence",
@@ -176,7 +181,7 @@ def get_company_dossier(
             rows_returned=0,
             result_chars=0,
             intent=intent,
-            error_category="APIError",
+            error_category=classify_exception(exc),
             error_message=str(exc),
         )
         return f"[INPUT_FIXABLE] Failed to build company dossier for '{domain_or_ticker}': {exc}"
@@ -272,10 +277,10 @@ def get_financial_statements(
             rows_returned=0,
             result_chars=0,
             intent=intent,
-            error_category="APIError",
+            error_category=classify_exception(exc),
             error_message=str(exc),
         )
-        return f"[INPUT_FIXABLE] Error fetching financial statements: {exc}"
+        return f"[INPUT_FIXABLE] Failed to extract financial statements for '{ticker_or_cik}': {exc}"
 
 
 @mcp.tool(annotations=_ANNOTATIONS_EXTERNAL)
@@ -342,10 +347,10 @@ def get_patent_portfolio(
             rows_returned=0,
             result_chars=0,
             intent=intent,
-            error_category="APIError",
+            error_category=classify_exception(exc),
             error_message=str(exc),
         )
-        return f"[INPUT_FIXABLE] Error querying patent portfolio: {exc}"
+        return f"[INPUT_FIXABLE] Failed to retrieve patent portfolio for '{company_name}': {exc}"
 
 
 @mcp.tool(annotations=_ANNOTATIONS_EXTERNAL)
@@ -402,10 +407,10 @@ def get_tech_stack_fingerprint(
             rows_returned=0,
             result_chars=0,
             intent=intent,
-            error_category="APIError",
+            error_category=classify_exception(exc),
             error_message=str(exc),
         )
-        return f"[INPUT_FIXABLE] Error fingerprinting domain '{domain}': {exc}"
+        return f"[INPUT_FIXABLE] Failed to fingerprint domain '{domain}': {exc}"
 
 
 @mcp.tool(annotations=_ANNOTATIONS_EXTERNAL)
@@ -496,10 +501,10 @@ def get_sec_filings_radar(
             rows_returned=0,
             result_chars=0,
             intent=intent,
-            error_category="APIError",
+            error_category=classify_exception(exc),
             error_message=str(exc),
         )
-        return f"[INPUT_FIXABLE] Error fetching SEC filings: {exc}"
+        return f"[INPUT_FIXABLE] Failed to retrieve SEC filings for '{ticker_or_cik}': {exc}"
 
 
 @mcp.tool(annotations=_ANNOTATIONS_EXTERNAL)
@@ -559,10 +564,10 @@ def get_federal_contracts(
             rows_returned=0,
             result_chars=0,
             intent=intent,
-            error_category="APIError",
+            error_category=classify_exception(exc),
             error_message=str(exc),
         )
-        return f"[INPUT_FIXABLE] Error querying federal contracts: {exc}"
+        return f"[INPUT_FIXABLE] Failed to query federal awards for '{company_name}': {exc}"
 
 
 @mcp.tool(annotations=_ANNOTATIONS_LOCAL)

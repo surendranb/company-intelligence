@@ -1,6 +1,6 @@
 {
-  "name": "company-intelligence",
-  "version": "0.1.1",
+  "name": "@surendranb/company-intelligence",
+  "version": "0.1.2",
   "description": "Comprehensive B2B Account Dossier, SEC Financials, USPTO Patents & Tech Stack Registry Engine",
   "main": "index.js",
   "bin": {
