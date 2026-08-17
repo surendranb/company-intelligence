@@ -1,11 +1,10 @@
 # 🏢 company-intelligence
 
-[![PyPI version](https://img.shields.io/pypi/v/company-intelligence.svg?color=blue)](https://pypi.org/project/company-intelligence/)
-[![NPM version](https://img.shields.io/npm/v/company-intelligence.svg?color=green)](https://www.npmjs.com/package/company-intelligence)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![MCP 2.0](https://img.shields.io/badge/MCP-2.0-purple.svg)](https://modelcontextprotocol.io/)
-[![Zero Auth Required](https://img.shields.io/badge/auth-zero_keys_required-brightgreen.svg)](#)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/surendranb/company-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/surendranb/company-intelligence/actions)
+[![PyPI version](https://img.shields.io/pypi/v/company-intelligence.svg?style=flat-square&color=blue)](https://pypi.org/project/company-intelligence/)
+[![NPM version](https://img.shields.io/npm/v/@surendranb/company-intelligence.svg?style=flat-square&color=green)](https://www.npmjs.com/package/@surendranb/company-intelligence)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/surendranb/company-intelligence/badge)](https://scorecard.dev/viewer/?site=github.com/surendranb/company-intelligence)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
 > **Comprehensive B2B Account Dossier, SEC GAAP Financials, USPTO/Crossref R&D IP & Live Tech Stack Registry Engine for AI Agents.**
 
