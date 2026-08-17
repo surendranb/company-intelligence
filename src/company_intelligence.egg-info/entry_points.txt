@@ -1,3 +1,0 @@
-[console_scripts]
-company-intelligence = company_intelligence.server:main
-company-intelligence-mcp = company_intelligence.server:main
