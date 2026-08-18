@@ -24,11 +24,6 @@ curl -fsSL https://company-intelligence.builditwithai.xyz/install | bash
 uvx company-intelligence
 ```
 
-### 📦 Option 3: Run via Node (`npx`)
-```bash
-npx -y @surendranb/company-intelligence
-```
-
 ---
 
 ## 🛠️ Model Context Protocol (MCP) Setup
@@ -54,8 +49,8 @@ Add to your IDE MCP settings:
 {
   "mcpServers": {
     "company-intelligence": {
-      "command": "npx",
-      "args": ["-y", "@surendranb/company-intelligence"]
+      "command": "uvx",
+      "args": ["company-intelligence"]
     }
   }
 }
