@@ -26,7 +26,7 @@ uvx company-intelligence
 
 ### 📦 Option 3: Run via Node (`npx`)
 ```bash
-npx -y company-intelligence
+npx -y @surendranb/company-intelligence
 ```
 
 ---
@@ -42,7 +42,7 @@ Add to `claude_desktop_config.json`:
   "mcpServers": {
     "company-intelligence": {
       "command": "uvx",
-      "args": ["--from", "company-intelligence", "company-intelligence"]
+      "args": ["company-intelligence"]
     }
   }
 }
@@ -55,7 +55,7 @@ Add to your IDE MCP settings:
   "mcpServers": {
     "company-intelligence": {
       "command": "npx",
-      "args": ["-y", "company-intelligence"]
+      "args": ["-y", "@surendranb/company-intelligence"]
     }
   }
 }
