@@ -62,6 +62,16 @@ def test_skills_tools():
     assert "Company Intelligence Playbook" in s_read
 
 
+def test_skills_tools_fallback_when_local_dir_missing(monkeypatch):
+    import company_intelligence.server as cis
+    from pathlib import Path
+    monkeypatch.setattr(cis, "_LOCAL_SKILLS_DIR", Path("/nonexistent/skills"))
+    
+    # skills_list still lists company_dossier_skill from registry
+    s_list = cis.skills_list()
+    assert "company_dossier_skill" in s_list
+
+
 def test_intent_parameter_support():
     res = get_company_dossier("AAPL", intent="Evaluate 3-year GAAP net income")
     assert "# 🏢 Comprehensive Account Dossier: AAPL" in res

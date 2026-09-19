@@ -4,10 +4,9 @@ Zero-auth extraction of corporate engineering publications, conference proceedin
 
 from __future__ import annotations
 
-import json
 import re
 import urllib.parse
-import urllib.request
+import requests
 from typing import Any, Dict, List, Optional
 
 
@@ -31,15 +30,11 @@ def fetch_patents_by_assignee(
     url = f"https://api.crossref.org/works?query.affiliation={encoded}&rows={max_patents}"
 
     try:
-        req = urllib.request.Request(
-            url,
-            headers={
-                "User-Agent": USER_AGENT,
-                "Accept": "application/json",
-            },
-        )
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
+        resp = requests.get(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"}, timeout=10)
+        if resp.status_code == 404:
+            return []
+        resp.raise_for_status()
+        data = resp.json()
 
         items = data.get("message", {}).get("items", [])
         results = []
@@ -74,5 +69,9 @@ def fetch_patents_by_assignee(
                 "url": doi_url,
             })
         return results
-    except Exception:
-        return []
+    except requests.HTTPError as e:
+        if e.response is not None and e.response.status_code == 404:
+            return []
+        raise RuntimeError(f"Crossref API error ({e.response.status_code if e.response else 'unknown'}): {e}") from e
+    except requests.RequestException as e:
+        raise RuntimeError(f"Crossref network error: {e}") from e

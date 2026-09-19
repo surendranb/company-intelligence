@@ -132,31 +132,37 @@ def get_company_dossier(
 
         # 3. USPTO Patents & R&D Velocity
         search_name = entity_name.split(",")[0].split(" Inc")[0].split(" Corp")[0].strip()
-        patents = fetch_patents_by_assignee(search_name, max_patents=4)
         sections.append("## 🔬 4. USPTO Patent Portfolio & Technical Moat")
-        if patents:
-            rows_returned += len(patents)
-            for p in patents:
-                cpc_list = p.get('cpc_classifications', [])
-                cpc_str = f" [Classes: {', '.join(cpc_list)}]" if cpc_list else ""
-                inv_list = p.get('inventors', [])
-                inv_str = f" | Inventors: {', '.join(inv_list)}" if inv_list else ""
-                sections.append(f"- **[{p.get('patent_number', '')}] [{p.get('title', '')}]({p.get('url', '')})** ({p.get('grant_date', '')}){cpc_str}{inv_str}")
-                if p.get('abstract'):
-                    sections.append(f"  > {p['abstract']}")
-        else:
-            sections.append("_No recently granted USPTO patents found under primary corporate assignee name._")
+        try:
+            patents = fetch_patents_by_assignee(search_name, max_patents=4)
+            if patents:
+                rows_returned += len(patents)
+                for p in patents:
+                    cpc_list = p.get('cpc_classifications', [])
+                    cpc_str = f" [Classes: {', '.join(cpc_list)}]" if cpc_list else ""
+                    inv_list = p.get('inventors', [])
+                    inv_str = f" | Inventors: {', '.join(inv_list)}" if inv_list else ""
+                    sections.append(f"- **[{p.get('patent_number', '')}] [{p.get('title', '')}]({p.get('url', '')})** ({p.get('grant_date', '')}){cpc_str}{inv_str}")
+                    if p.get('abstract'):
+                        sections.append(f"  > {p['abstract']}")
+            else:
+                sections.append("_No recently granted USPTO patents found under primary corporate assignee name._")
+        except Exception as e:
+            sections.append(f"_Patents and technical publications lookup unavailable: {e}_")
         sections.append("")
 
         # 4. Federal Contracting History
-        contracts = fetch_federal_contracts(search_name, limit=3)
         sections.append("## 🏛️ 5. US Federal Procurement & Contract Awards (USAspending)")
-        if contracts:
-            rows_returned += len(contracts)
-            for c in contracts:
-                sections.append(f"- **[{c['awarding_agency']}]** {_format_currency(c['obligated_amount'])} - {c['description']} (Award: `{c['award_id']}`)")
-        else:
-            sections.append("_No prime federal procurement contracts found on USAspending._")
+        try:
+            contracts = fetch_federal_contracts(search_name, limit=3)
+            if contracts:
+                rows_returned += len(contracts)
+                for c in contracts:
+                    sections.append(f"- **[{c['awarding_agency']}]** {_format_currency(c['obligated_amount'])} - {c['description']} (Award: `{c['award_id']}`)")
+            else:
+                sections.append("_No prime federal procurement contracts found on USAspending._")
+        except Exception as e:
+            sections.append(f"_Federal procurement contracts lookup unavailable: {e}_")
         sections.append("")
 
         result_text = "\n".join(sections)
@@ -570,6 +576,44 @@ def get_federal_contracts(
         return f"[INPUT_FIXABLE] Failed to query federal awards for '{company_name}': {exc}"
 
 
+_SKILLS_BASE_URL = "https://raw.githubusercontent.com/surendranb/company-intelligence/main/skills/"
+_SKILLS_REGISTRY = {
+    "company_dossier_skill": "Comprehensive B2B account dossier playbook",
+}
+_LOCAL_SKILLS_DIR = Path(__file__).resolve().parent.parent.parent / "skills"
+if not _LOCAL_SKILLS_DIR.is_dir() and (Path.cwd() / "skills").is_dir():
+    _LOCAL_SKILLS_DIR = Path.cwd() / "skills"
+
+
+def _load_skill(name: str) -> tuple[Optional[str], bool]:
+    content: Optional[str] = None
+    fetch_ok = False
+    try:
+        import urllib.request
+        req = urllib.request.Request(
+            f"{_SKILLS_BASE_URL}{name}.md",
+            headers={"User-Agent": f"company-intelligence/{MCP_SERVER_VERSION}"},
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            if resp.status == 200:
+                raw = resp.read().decode("utf-8")
+                if raw.strip():
+                    content = raw
+                    fetch_ok = True
+    except Exception:
+        pass
+
+    if content is None:
+        try:
+            local = _LOCAL_SKILLS_DIR / f"{name}.md"
+            if local.is_file():
+                content = local.read_text(encoding="utf-8")
+        except Exception:
+            pass
+
+    return content, fetch_ok
+
+
 @mcp.tool(annotations=_ANNOTATIONS_LOCAL)
 def skill_read(skill_name: str = "company_dossier_skill") -> str:
     """Read a dynamic skill playbook bundled with company-intelligence.
@@ -579,19 +623,19 @@ def skill_read(skill_name: str = "company_dossier_skill") -> str:
     """
     t0 = time.perf_counter()
     try:
-        skill_path = Path(__file__).parent.parent.parent / "skills" / f"{skill_name}.md"
-        if not skill_path.exists():
+        content, fetch_ok = _load_skill(skill_name)
+        if content is None:
+            msg = f"[INPUT_FIXABLE] Skill '{skill_name}' not found. Use skills_list() to view available playbooks."
             track_tool_call(
                 "skill_read",
                 (time.perf_counter() - t0) * 1000.0,
                 status="error",
                 rows_returned=0,
-                result_chars=len(f"[INPUT_FIXABLE] Skill '{skill_name}' not found. Use skills_list() to view available playbooks."),
+                result_chars=len(msg),
                 error_category="NotFoundError",
                 error_message=f"Skill '{skill_name}' not found",
             )
-            return f"[INPUT_FIXABLE] Skill '{skill_name}' not found. Use skills_list() to view available playbooks."
-        content = skill_path.read_text(encoding="utf-8")
+            return msg
         duration_ms = (time.perf_counter() - t0) * 1000.0
         track_tool_call(
             "skill_read",
@@ -599,6 +643,7 @@ def skill_read(skill_name: str = "company_dossier_skill") -> str:
             status="success",
             rows_returned=1,
             result_chars=len(content),
+            custom_props={"fetch_ok": fetch_ok},
         )
         return content
     except Exception as exc:
@@ -620,24 +665,17 @@ def skills_list() -> str:
     """List all dynamic skill playbooks available in company-intelligence."""
     t0 = time.perf_counter()
     try:
-        skills_dir = Path(__file__).parent.parent.parent / "skills"
-        if not skills_dir.exists():
-            track_tool_call(
-                "skills_list",
-                (time.perf_counter() - t0) * 1000.0,
-                status="success",
-                rows_returned=0,
-                result_chars=len("No skills directory found."),
-            )
-            return "No skills directory found."
-        skills = [f.stem for f in skills_dir.glob("*.md")]
-        result_text = f"Available skills: {', '.join(skills)}"
+        skills = set(_SKILLS_REGISTRY.keys())
+        if _LOCAL_SKILLS_DIR.is_dir():
+            skills.update(f.stem for f in _LOCAL_SKILLS_DIR.glob("*.md"))
+        skills_sorted = sorted(skills)
+        result_text = f"Available skills: {', '.join(skills_sorted)}"
         duration_ms = (time.perf_counter() - t0) * 1000.0
         track_tool_call(
             "skills_list",
             duration_ms,
             status="success",
-            rows_returned=len(skills),
+            rows_returned=len(skills_sorted),
             result_chars=len(result_text),
         )
         return result_text

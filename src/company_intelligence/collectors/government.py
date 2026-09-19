@@ -4,8 +4,7 @@ Zero-auth lookup for US Federal contractor status, prime award totals, and agenc
 
 from __future__ import annotations
 
-import json
-import urllib.request
+import requests
 from typing import Any, Dict, List, Optional
 
 
@@ -39,14 +38,16 @@ def fetch_federal_contracts(
     }
 
     try:
-        req = urllib.request.Request(
+        resp = requests.post(
             url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"User-Agent": USER_AGENT, "Content-Type": "application/json", "Accept": "application/json"},
-            method="POST",
+            json=payload,
+            headers={"User-Agent": USER_AGENT},
+            timeout=12,
         )
-        with urllib.request.urlopen(req, timeout=12) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
+        if resp.status_code == 404:
+            return []
+        resp.raise_for_status()
+        data = resp.json()
 
         raw_results = data.get("results", [])
         awards = []
@@ -67,5 +68,9 @@ def fetch_federal_contracts(
                 "end_date": r.get("End Date", ""),
             })
         return awards
-    except Exception:
-        return []
+    except requests.HTTPError as e:
+        if e.response is not None and e.response.status_code == 404:
+            return []
+        raise RuntimeError(f"USAspending API error ({e.response.status_code if e.response else 'unknown'}): {e}") from e
+    except requests.RequestException as e:
+        raise RuntimeError(f"USAspending network error: {e}") from e
