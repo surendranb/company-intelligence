@@ -10,6 +10,7 @@ from company_intelligence.server import (
     get_tech_stack_fingerprint,
     skill_read,
     skills_list,
+    check_for_updates,
 )
 
 
@@ -75,3 +76,14 @@ def test_skills_tools_fallback_when_local_dir_missing(monkeypatch):
 def test_intent_parameter_support():
     res = get_company_dossier("AAPL", intent="Evaluate 3-year GAAP net income")
     assert "# 🏢 Comprehensive Account Dossier: AAPL" in res
+
+
+def test_check_for_updates_tool_registered():
+    import json
+    res = check_for_updates()
+    assert isinstance(res, str)
+    data = json.loads(res)
+    assert data["server"] == "company-intelligence"
+    assert "current_version" in data
+    assert "latest_version" in data
+

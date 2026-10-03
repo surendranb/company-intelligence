@@ -4,6 +4,8 @@ Comprehensive B2B Account Dossier, SEC Financials, USPTO Patents & Tech Stack Re
 
 from __future__ import annotations
 
+import functools
+import inspect
 import json
 import re
 import sys
@@ -30,6 +32,10 @@ from company_intelligence.telemetry import (
     track_event,
     track_tool_call,
 )
+from company_intelligence.updates import (
+    check_server_update,
+    get_upgrade_nudge,
+)
 
 mcp = MCPServer(
     "company-intelligence",
@@ -38,8 +44,56 @@ mcp = MCPServer(
     website_url="https://github.com/surendranb/company-intelligence",
 )
 
+
+def _append_upgrade_nudge(result: Any) -> Any:
+    try:
+        nudge = get_upgrade_nudge("company-intelligence", MCP_SERVER_VERSION)
+        if nudge:
+            if isinstance(result, dict):
+                result["_upgrade_notice"] = nudge.strip()
+            elif isinstance(result, str):
+                try:
+                    data = json.loads(result)
+                    if isinstance(data, dict):
+                        data["_upgrade_notice"] = nudge.strip()
+                        return json.dumps(data, indent=2)
+                except Exception:
+                    pass
+                result = result + nudge
+    except Exception:
+        pass
+    return result
+
+
+_orig_tool = mcp.tool
+
+
+def _upgrade_nudge_tool(*args, **kwargs):
+    def dec(fn):
+        if inspect.iscoroutinefunction(fn):
+            @functools.wraps(fn)
+            async def async_wrapper(*f_args, **f_kwargs):
+                res = await fn(*f_args, **f_kwargs)
+                if fn.__name__ != "check_for_updates":
+                    res = _append_upgrade_nudge(res)
+                return res
+            return _orig_tool(*args, **kwargs)(async_wrapper)
+        else:
+            @functools.wraps(fn)
+            def sync_wrapper(*f_args, **f_kwargs):
+                res = fn(*f_args, **f_kwargs)
+                if fn.__name__ != "check_for_updates":
+                    res = _append_upgrade_nudge(res)
+                return res
+            return _orig_tool(*args, **kwargs)(sync_wrapper)
+    return dec
+
+
+mcp.tool = _upgrade_nudge_tool
+
 _ANNOTATIONS_EXTERNAL = ToolAnnotations(read_only_hint=True, idempotent_hint=True, open_world_hint=True)
 _ANNOTATIONS_LOCAL = ToolAnnotations(read_only_hint=True, idempotent_hint=True, open_world_hint=False)
+
 
 
 def _format_currency(val: Optional[float]) -> str:
@@ -691,6 +745,36 @@ def skills_list() -> str:
             error_message=str(exc),
         )
         return f"Error listing skills: {exc}"
+
+
+@mcp.tool(
+    name="check_for_updates",
+    description="Check PyPI for newer versions of company-intelligence and get upgrade instructions.",
+    annotations=_ANNOTATIONS_LOCAL,
+)
+def check_for_updates() -> str:
+    """Check PyPI for newer versions of company-intelligence."""
+    t0 = time.perf_counter()
+    try:
+        res = check_server_update("company-intelligence", MCP_SERVER_VERSION, force_check=True)
+        out = json.dumps(res, indent=2)
+        track_tool_call(
+            "check_for_updates",
+            (time.perf_counter() - t0) * 1000.0,
+            status="success",
+            rows_returned=1,
+            result_chars=len(out),
+        )
+        return out
+    except Exception as exc:
+        track_tool_call(
+            "check_for_updates",
+            (time.perf_counter() - t0) * 1000.0,
+            status="error",
+            error_category=classify_exception(exc),
+            error_message=str(exc),
+        )
+        return json.dumps({"error": str(exc)}, indent=2)
 
 
 def main():
