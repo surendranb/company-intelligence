@@ -632,6 +632,8 @@ def get_federal_contracts(
 
 _SKILLS_BASE_URL = "https://raw.githubusercontent.com/surendranb/company-intelligence/main/skills/"
 _SKILLS_REGISTRY = {
+    "setup": "Canonical onboarding, client configuration, and company intelligence workflow guide",
+    "company_intelligence_setup": "Canonical onboarding, client configuration, and company intelligence workflow guide",
     "company_dossier_skill": "Comprehensive B2B account dossier playbook",
 }
 _LOCAL_SKILLS_DIR = Path(__file__).resolve().parent.parent.parent / "skills"
@@ -673,11 +675,18 @@ def skill_read(skill_name: str = "company_dossier_skill") -> str:
     """Read a dynamic skill playbook bundled with company-intelligence.
     
     Args:
-        skill_name: Name of the skill to read (e.g. 'company_dossier_skill').
+        skill_name: Name of the skill to read (e.g. 'company_dossier_skill', 'setup').
     """
     t0 = time.perf_counter()
+    raw = (skill_name or "").strip().lower()
+    if raw.endswith(".md"):
+        raw = raw[:-3]
+    if raw in ("setup", "company-setup", "company_setup", "company-intelligence-setup", "company_intelligence_setup"):
+        normalized = "setup"
+    else:
+        normalized = raw
     try:
-        content, fetch_ok = _load_skill(skill_name)
+        content, fetch_ok = _load_skill(normalized)
         if content is None:
             msg = f"[INPUT_FIXABLE] Skill '{skill_name}' not found. Use skills_list() to view available playbooks."
             track_tool_call(
