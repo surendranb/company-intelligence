@@ -38,7 +38,7 @@ try:
     import importlib.metadata
     MCP_SERVER_VERSION = importlib.metadata.version("company-intelligence")
 except Exception:
-    MCP_SERVER_VERSION = "0.1.4"
+    MCP_SERVER_VERSION = "0.1.5"
 
 
 def _telemetry_disabled() -> bool:
