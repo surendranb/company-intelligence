@@ -1,0 +1,31 @@
+{
+  "name": "company-intelligence",
+  "version": "0.1.5",
+  "description": "B2B account intelligence engine for AI agents: SEC EDGAR 10-K/GAAP financials, USPTO patents, and DNS infrastructure fingerprinting. Zero API keys.",
+  "author": {
+    "name": "Surendran B",
+    "url": "https://github.com/surendranb"
+  },
+  "homepage": "https://company-intelligence.builditwithai.xyz",
+  "repository": "https://github.com/surendranb/company-intelligence",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "b2b",
+    "sec-edgar",
+    "patents",
+    "company-intelligence",
+    "claude",
+    "ai-agents"
+  ],
+  "mcpServers": {
+    "company-intelligence": {
+      "command": "uvx",
+      "args": [
+        "company-intelligence==0.1.5"
+      ]
+    }
+  }
+}
