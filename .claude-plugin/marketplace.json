@@ -1,0 +1,19 @@
+{
+  "name": "company-intelligence",
+  "owner": {
+    "name": "Surendran B",
+    "url": "https://github.com/surendranb"
+  },
+  "metadata": {
+    "description": "B2B account intelligence engine for AI agents: SEC EDGAR 10-K/GAAP financials, USPTO patents, and DNS infrastructure fingerprinting. Zero API keys.",
+    "version": "0.1.5"
+  },
+  "plugins": [
+    {
+      "name": "company-intelligence",
+      "source": "./",
+      "description": "B2B account intelligence engine for AI agents: SEC EDGAR 10-K/GAAP financials, USPTO patents, and DNS infrastructure fingerprinting. Zero API keys.",
+      "strict": false
+    }
+  ]
+}
