@@ -5,6 +5,7 @@ Zero-auth extraction of corporate engineering publications, conference proceedin
 from __future__ import annotations
 
 import re
+import time
 import urllib.parse
 import requests
 from typing import Any, Dict, List, Optional
@@ -27,10 +28,22 @@ def fetch_patents_by_assignee(
     """Fetch corporate engineering papers, technical patent proceedings, and R&D artifacts for a company."""
     clean_name = company_name.strip()
     encoded = urllib.parse.quote(clean_name)
-    url = f"https://api.crossref.org/works?query.affiliation={encoded}&rows={max_patents}"
+    mailto = "surendran@builditwithai.xyz"
+    url = f"https://api.crossref.org/works?query.affiliation={encoded}&rows={max_patents}&mailto={mailto}"
 
+    headers = {"User-Agent": USER_AGENT, "Accept": "application/json"}
     try:
-        resp = requests.get(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"}, timeout=10)
+        # ponytail: Crossref throttles shared CI runner IPs with 429; the mailto routes us to the polite pool, and retries cover the residual throttle. Upgrade to a queue if it persists.
+        for attempt in range(4):
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code != 429 and resp.status_code < 500:
+                break
+            if attempt < 3:
+                try:
+                    wait = min(int(resp.headers.get("Retry-After", 0)), 30)
+                except ValueError:
+                    wait = 0
+                time.sleep(wait or (attempt + 1) * 5)
         if resp.status_code == 404:
             return []
         resp.raise_for_status()
